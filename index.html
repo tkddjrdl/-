@@ -25,42 +25,26 @@
       scanning = false;
       document.getElementById('result').innerHTML = '처리 중...';
 
-      var callbackName = 'cb_' + Date.now();
-      var script = document.createElement('script');
-
-      function cleanup() {
-        if (document.body.contains(script)) document.body.removeChild(script);
-        delete window[callbackName];
-      }
-
-      function resetScanner() {
-        setTimeout(function() {
+      fetch(GAS_URL + "?mawb=" + encodeURIComponent(decodedText))
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+          if (data.success) {
+            document.getElementById('result').innerHTML =
+              '<span class="success">입고 완료<br>' + data.mawb + '</span>';
+          } else {
+            document.getElementById('result').innerHTML =
+              '<span class="fail">해당 MAWB 없음<br>' + data.mawb + '</span>';
+          }
+          setTimeout(function() {
+            scanning = true;
+            document.getElementById('result').innerHTML = '';
+          }, 3000);
+        })
+        .catch(function(err) {
+          document.getElementById('result').innerHTML =
+            '<span class="fail">오류: ' + err.message + '</span>';
           scanning = true;
-          document.getElementById('result').innerHTML = '';
-        }, 3000);
-      }
-
-      window[callbackName] = function(data) {
-        cleanup();
-        if (data.success) {
-          document.getElementById('result').innerHTML =
-            '<span class="success">입고 완료<br>' + data.mawb + '</span>';
-        } else {
-          document.getElementById('result').innerHTML =
-            '<span class="fail">해당 MAWB 없음<br>' + data.mawb + '</span>';
-        }
-        resetScanner();
-      };
-
-      script.onerror = function() {
-        cleanup();
-        document.getElementById('result').innerHTML =
-          '<span class="fail">네트워크 오류. 다시 시도하세요.</span>';
-        resetScanner();
-      };
-
-      script.src = GAS_URL + "?mawb=" + encodeURIComponent(decodedText) + "&callback=" + callbackName;
-      document.body.appendChild(script);
+        });
     }
 
     var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
