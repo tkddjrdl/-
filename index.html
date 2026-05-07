@@ -25,21 +25,26 @@
       scanning = false;
       document.getElementById('result').innerHTML = '처리 중...';
 
-      fetch(GAS_URL + "?mawb=" + encodeURIComponent(decodedText))
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById('result').innerHTML =
-              '<span class="success">입고 완료<br>' + data.mawb + '</span>';
-          } else {
-            document.getElementById('result').innerHTML =
-              '<span class="fail">MAWB 없음<br>' + data.mawb + '</span>';
-          }
-          setTimeout(() => {
-            scanning = true;
-            document.getElementById('result').innerHTML = '';
-          }, 3000);
-        });
+      fetch(GAS_URL + "?mawb=" + encodeURIComponent(decodedText), {
+  method: "GET",
+  mode: "no-cors"
+})
+.then(() => {
+  document.getElementById('result').innerHTML =
+    '<span class="success">입고 처리 완료<br>' + decodedText + '</span>';
+  setTimeout(() => {
+    scanning = true;
+    document.getElementById('result').innerHTML = '';
+  }, 3000);
+})
+.catch(() => {
+  document.getElementById('result').innerHTML =
+    '<span class="fail">오류 발생. 다시 시도하세요.</span>';
+  setTimeout(() => {
+    scanning = true;
+    document.getElementById('result').innerHTML = '';
+  }, 3000);
+});
     }
 
     var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
