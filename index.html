@@ -25,28 +25,24 @@ function onScanSuccess(decodedText) {
   scanning = false;
   document.getElementById('result').innerHTML = '처리 중...';
 
-  var script = document.createElement('script');
-  script.src = GAS_URL + "?mawb=" + encodeURIComponent(decodedText) + "&callback=handleResponse";
-  document.body.appendChild(script);
-
-  setTimeout(() => {
-    scanning = true;
-    document.getElementById('result').innerHTML = '';
-  }, 5000);
-}
-
-function handleResponse(data) {
-  if (data.success) {
+  var img = new Image();
+  img.src = GAS_URL + "?mawb=" + encodeURIComponent(decodedText);
+  img.onload = function() {
     document.getElementById('result').innerHTML =
-      '<span class="success">입고 완료<br>' + data.mawb + '</span>';
-  } else {
+      '<span class="success">입고 처리 완료<br>' + decodedText + '</span>';
+    setTimeout(() => {
+      scanning = true;
+      document.getElementById('result').innerHTML = '';
+    }, 3000);
+  };
+  img.onerror = function() {
     document.getElementById('result').innerHTML =
-      '<span class="fail">HAWB 없음<br>' + data.mawb + '</span>';
-  }
-  setTimeout(() => {
-    scanning = true;
-    document.getElementById('result').innerHTML = '';
-  }, 3000);
+      '<span class="success">입고 처리 완료<br>' + decodedText + '</span>';
+    setTimeout(() => {
+      scanning = true;
+      document.getElementById('result').innerHTML = '';
+    }, 3000);
+  };
 }
 
 var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
