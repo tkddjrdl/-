@@ -17,38 +17,40 @@
   <div id="result"></div>
 
   <script>
-    const GAS_URL = "여기에_Apps_Script_웹앱_URL_붙여넣기";
     var scanning = true;
+const GAS_URL = "여기에_Apps_Script_웹앱_URL";
 
-    function onScanSuccess(decodedText) {
-      if (!scanning) return;
-      scanning = false;
-      document.getElementById('result').innerHTML = '처리 중...';
+function onScanSuccess(decodedText) {
+  if (!scanning) return;
+  scanning = false;
+  document.getElementById('result').innerHTML = '처리 중...';
 
-      fetch(GAS_URL + "?mawb=" + encodeURIComponent(decodedText), {
-  method: "GET",
-  mode: "no-cors"
-})
-.then(() => {
-  document.getElementById('result').innerHTML =
-    '<span class="success">입고 처리 완료<br>' + decodedText + '</span>';
+  var script = document.createElement('script');
+  script.src = GAS_URL + "?mawb=" + encodeURIComponent(decodedText) + "&callback=handleResponse";
+  document.body.appendChild(script);
+
+  setTimeout(() => {
+    scanning = true;
+    document.getElementById('result').innerHTML = '';
+  }, 5000);
+}
+
+function handleResponse(data) {
+  if (data.success) {
+    document.getElementById('result').innerHTML =
+      '<span class="success">입고 완료<br>' + data.mawb + '</span>';
+  } else {
+    document.getElementById('result').innerHTML =
+      '<span class="fail">HAWB 없음<br>' + data.mawb + '</span>';
+  }
   setTimeout(() => {
     scanning = true;
     document.getElementById('result').innerHTML = '';
   }, 3000);
-})
-.catch(() => {
-  document.getElementById('result').innerHTML =
-    '<span class="fail">오류 발생. 다시 시도하세요.</span>';
-  setTimeout(() => {
-    scanning = true;
-    document.getElementById('result').innerHTML = '';
-  }, 3000);
-});
-    }
+}
 
-    var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
-    scanner.render(onScanSuccess);
+var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+scanner.render(onScanSuccess);
   </script>
 </body>
 </html>
