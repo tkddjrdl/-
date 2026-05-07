@@ -18,35 +18,53 @@
 
   <script>
     var scanning = true;
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxJD5cMlUASTgB4UTGnn9FpuLDfC_5G1Jd7beGTcyQdQ676S8rotedqrBe7d0fGHiRn/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxJD5cMlUASTgB4UTGnn9FpuLDfC_5G1Jd7beGTcyQdQ676S8rotedqrBe7d0fGHiRn/exec";
 
-function onScanSuccess(decodedText) {
-  if (!scanning) return;
-  scanning = false;
-  document.getElementById('result').innerHTML = '처리 중...';
+    function onScanSuccess(decodedText) {
+      if (!scanning) return;
+      scanning = false;
+      document.getElementById('result').innerHTML = '처리 중...';
 
-  var img = new Image();
-  img.src = GAS_URL + "?mawb=" + encodeURIComponent(decodedText);
-  img.onload = function() {
-    document.getElementById('result').innerHTML =
-      '<span class="success">입고 처리 완료<br>' + decodedText + '</span>';
-    setTimeout(() => {
-      scanning = true;
-      document.getElementById('result').innerHTML = '';
-    }, 3000);
-  };
-  img.onerror = function() {
-    document.getElementById('result').innerHTML =
-      '<span class="success">입고 처리 완료<br>' + decodedText + '</span>';
-    setTimeout(() => {
-      scanning = true;
-      document.getElementById('result').innerHTML = '';
-    }, 3000);
-  };
-}
+      var callbackName = 'cb_' + Date.now();
+      var script = document.createElement('script');
 
-var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
-scanner.render(onScanSuccess);
+      function cleanup() {
+        if (document.body.contains(script)) document.body.removeChild(script);
+        delete window[callbackName];
+      }
+
+      function resetScanner() {
+        setTimeout(function() {
+          scanning = true;
+          document.getElementById('result').innerHTML = '';
+        }, 3000);
+      }
+
+      window[callbackName] = function(data) {
+        cleanup();
+        if (data.success) {
+          document.getElementById('result').innerHTML =
+            '<span class="success">입고 완료<br>' + data.mawb + '</span>';
+        } else {
+          document.getElementById('result').innerHTML =
+            '<span class="fail">해당 MAWB 없음<br>' + data.mawb + '</span>';
+        }
+        resetScanner();
+      };
+
+      script.onerror = function() {
+        cleanup();
+        document.getElementById('result').innerHTML =
+          '<span class="fail">네트워크 오류. 다시 시도하세요.</span>';
+        resetScanner();
+      };
+
+      script.src = GAS_URL + "?mawb=" + encodeURIComponent(decodedText) + "&callback=" + callbackName;
+      document.body.appendChild(script);
+    }
+
+    var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+    scanner.render(onScanSuccess);
   </script>
 </body>
 </html>
